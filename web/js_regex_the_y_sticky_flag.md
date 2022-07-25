@@ -36,12 +36,12 @@ examples where using this flag is possible but not necessary.
 (function() {
     // given a CSV string
 
-    const csv = 'ab,"a",'; // 3 columns (but it doesn't matter)
+    const csv = 'ab,"a",c'; // 3 columns (but it doesn't matter)
     console.log(csv);
 
     // we want to match double quotes, commas and other characters
 
-    const pattern = '[",]|.';
+    const pattern = '[",]|[^",]+';
 
     // several approaches are implemented below
 
