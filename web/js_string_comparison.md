@@ -3,8 +3,8 @@
 How do we compare strings in JavaScript?
 
 - [Basic comparison](#using-basic-comparison-operators)
-- [Support for localization](#using-a-localization-aware-comparison-function)
 - [Unicode equivalence](#using-a-normalization-function-for-unicode-equivalence)
+- [Support for localization](#using-a-localization-aware-comparison-function)
 
 ## Using basic comparison operators
 
@@ -35,16 +35,28 @@ an explanation.
 })();
 ```
 
-As you noticed, the strings in the example above represent the same information
-but are not equal. This is because JavaScript compares strings based on their
-Unicode escape sequence, which can be inferred, if necessary, from the
-characters they contain. Thus, the use of basic comparison operators is reliable
-only if one can guarantee that the same string will never be encoded using
-different Unicode escape sequences, or if one does not care about Unicode
-equivalence between strings.
+As can be seen in the example above, all the strings represent the same
+information but are not equal. This is because JavaScript compares strings based
+on their Unicode escape sequence, which can be inferred from the characters they
+contain. Thus, the use of basic comparison operators is reliable only if one can
+guarantee that the same string will never be encoded using different Unicode
+escape sequences, or if one does not care about Unicode equivalence between
+strings.
 
 Usually we don't have to worry about Unicode equivalence when comparing strings,
-so using the basic comparison operators should often be your first choice.
+so using the basic comparison operators should often be the developer's first
+choice.
+
+## Using a normalization function for Unicode equivalence
+
+When Unicode equivalence is required, strings can first be normalized using
+`String.prototype.normalize()`. The normalized versions can then be compared
+using the basic comparison operators mentioned above.
+
+However, before reading the documentation of the said normalization function,
+one might want to read these introductory documents first.
+- [Section 1.1 on Canonical and Compatibility Equivalence from Unicode Standard Annex #15](https://unicode.org/reports/tr15/#Canon_Compat_Equivalence)
+- [How to Check if Two Strings are Equal in JavaScript](https://www.javascripttutorial.net/string/javascript-string-equals/)
 
 ## Using a localization-aware comparison function
 
@@ -60,12 +72,4 @@ encode additional information in the value, but the function is required to
 define a total ordering on all Strings and to return 0 when comparing Strings
 that are considered canonically equivalent by the Unicode standard.*
 
-## Using a normalization function for Unicode equivalence
-
-When Unicode equivalence is required, strings can first be normalized using
-`String.prototype.normalize()`. The normalized versions can then be compared
-using the basic comparison operators mentioned above.
-
-Finally, before reading the documentation of the said normalization function,
-you might want to read this introductory article first:
-[How to Check if Two Strings are Equal in JavaScript](https://www.javascripttutorial.net/string/javascript-string-equals/).
+So one can expect this function to support Unicode for canonical equivalence.

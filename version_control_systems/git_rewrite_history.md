@@ -65,10 +65,11 @@ progress during rewrite: e.g. `<path_to_project_repository> (master|REBASE 1/3)`
 to `git commit`. In any case, be sure that author date and commit date are set
 to the same expected value. You can run the following command for this purpose:
 `GIT_COMMITTER_DATE="..." git commit --amend --date="..." --no-edit`.
-    - The `GIT_COMMITTER_DATE` environment variable will set the author date
-    while the `--date` option will set the commit date. It seems that the author
-    date is the one shown online on github.com for each commit, at
-    https://github.com/<username>/<repository_name>/commits for example.
+    - The `GIT_COMMITTER_DATE` environment variable will set the
+    change-sensitive commit date (the one that is also set after amend/rebase
+    for example), while the `--date` option will set the initial commit date
+    (a.k.a. the author date, shown in the standard output of `git log` for
+    example).
     - RFC 2822 is a possible date format, e.g. `Thu, 07 Apr 2005 22:13:13 +0200`.
     If you want to use the exact date values you used before starting to rewrite
     the history, open a command line prompt on the local backup you created
@@ -82,6 +83,9 @@ to the same expected value. You can run the following command for this purpose:
         - https://git-scm.com/docs/git-commit/#_date_formats
         - https://stackoverflow.com/questions/454734/how-can-one-change-the-timestamp-of-an-old-commit-in-git/5017265#5017265
         - https://stackoverflow.com/questions/19742345/what-is-the-format-for-date-parameter-of-git-commit/19742762#19742762
+    - More sources
+        - https://riptutorial.com/git/example/5913/committing-at-a-specific-date
+        - https://gist.github.com/dzc34/fd3cc992b22e73832cb09a286d5d7a7f
 - Run `git rebase --continue`.
     - Now you can rewrite the next commit as shown in your command line prompt:
     e.g. `<path_to_project_repository> (master|REBASE 2/3)`. We just need to
