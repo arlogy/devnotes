@@ -10,16 +10,18 @@
 
 This document shares an educational approach to parsing Comma-Separated Values
 (CSV), focusing more on reading arbitrary strings than on their source as a
-container (e.g. array, file or other data streams). Please note that simply
-splitting comma-separated strings on commas would not allow commas to be used
-inside fields, as in `a,"b,b",c` which contains three fields instead of four for
+container (e.g. array, file or other data streams). That is to say, we want to
+correctly parse possibly scattered CSV data while being ignorant or independent
+of their source. However, regardless of our implementation, simply splitting
+comma-separated strings on commas would not allow commas to be used inside
+fields, as in `a,"b,b",c` which contains three fields instead of four for
 example, the second field being enclosed with double quotes. A more elaborate
 approach is therefore necessary to increase the flexibility of a CSV parser.
 
 In the following sections, we will create a generic and fast CSV parser in an
 easy way, from specification to implementation, testing and performance
 benchmarking, while meeting the requirements of a commonly used CSV format
-(given that this format is not standardized).
+(given that CSV parsing is not standardized).
 
 Let's get started!
 
@@ -43,15 +45,15 @@ consists of fields separated by a comma.
 OS). So we might implement support for all types of line breaks when parsing.
 - The field separator could also be configured and set to any character other
 than the comma, mainly `;` (semicolon), `\t` (tabulation) and ` ` (space). Other
-characters like `|` (pipe symbol), multiple spaces (instead of a tabulation) or
-even a combination of several separators might also be used.
+characters might also be used, such as `|` (pipe symbol), multiple spaces
+(instead of a tabulation), or even a combination of several separators.
 
 #### R6
 
-Fields containing special characters in the CSV context (i.e. line breaks,
-double quotes and commas) must be enclosed in double quotes for those characters
-to lose their special meaning. For example, a field separator (e.g. a comma) in
-double quotes will not be considered as such.
+Special characters in CSV context are line breaks, double quotes and commas.
+Fields containing such characters must be enclosed in double quotes for said
+characters to lose their special meaning. For example, a field separator (e.g. a
+comma) in double quotes will not be considered as such.
 
 #### R5 & R7
 
@@ -67,49 +69,52 @@ double quote. At this point, some clarifications are needed before we move on.
     with double quotes. In other words, such fields are easily distinguished
     when separated by a comma (`a,ab,a",a"b"`).
     - Now let's take a look at `...,"a,bc` where a field starts with a double
-    quote. We may advocate that the second comma is a field separator and its
-    left side (`"a`) represents a field that is not enclosed with double quotes,
-    but we don't actually know if a closing double quote has been forgotten and
-    whether the intended field was `"a"` or `"a,bc"` for example, which are
-    certainly valid double-quoted fields. For this reason, we will require that
-    open double quotes be terminated (`"..."`). In other words, the second comma
-    in the previous example is not a field separator, so we are dealing with a
-    field enclosed with double quotes but where the closing double quote is
-    missing.
+    quote (we don't care about entries before the field). We may advocate that
+    the second comma is a field separator and its left side (`"a`) represents a
+    field that is not enclosed with double quotes, but we don't actually know if
+    a closing double quote has been forgotten and whether the intended field was
+    `"a"` or `"a,bc"` for example, which are certainly valid double-quoted
+    fields. For this reason, we will require that open double quotes be
+    terminated (`"..."`). In other words, the second comma in the previous
+    example is not a field separator, so we are dealing with a field enclosed
+    with double quotes but where the closing double quote is missing.
 - What about escaping a double quote appearing inside a double-quoted field?
 Let's start with a few examples: `"a""b"`, `"a""` and `"a"x`.
     - It is easy to realize that the first example is a valid double-quoted
     field representing `a"b` (one double quote escaping the other).
     - The second example is invalid because we need to see the juxtaposed double
     quotes as an escape sequence, so the closing double quote is missing.
-    - However, the validity of the last example as a field is open to
-    discussion. Indeed, some parsers may reject this field because it contains a
-    double quote that is not escaped by another double quote contrary to the
-    requirements. Other parsers may accept the field and move one when a comma
-    or line break is read, i.e. they will consider the field as not being
-    enclosed in double quotes: e.g. they can interpret `"a"x,b` as representing
-    two fields (`"a"x` and `b`, or `ax` and `b`). Nevertheless, none of these
-    choices were made in LibreOffice 7.1 for example: instead, the field is
-    considered enclosed with double quotes but without the closing double quote;
-    i.e. `"a"x,b` is an unterminated double-quoted field whose value is `a"x,b`.
-    We will do the same for compatibility reasons.
+    - The last example is invalid too because it contains a double quote that is
+    not escaped by another double quote contrary to requirements, the first
+    double quote indicating that the field would be a double-quoted one.
+    Besides, for your information, the acceptance of this example as a field is
+    open to discussion. In LibreOffice 7.1 for example, the field is considered
+    enclosed with double quotes but without the closing double quote; i.e. `"a"x,b`
+    is an unterminated double-quoted field whose value is `a"x,b`. Other parsers
+    could also accept the field and continue parsing when a comma or line break
+    is read, i.e. they would consider the field as not being enclosed in double
+    quotes: e.g. they would interpret `"a"x,b` as representing two fields (`"a"x`
+    and `b`, or `ax` and `b`).
 
 #### R3 & R4
 
 These requirements are quite easy to understand and only apply when parsing CSV
 lines as a group (from a file for example). Note however that *spaces are
 considered part of a field and should not be ignored*. The use of *should* here
-is interesting because (for example) it is debatable whether spaces following a
-double-quoted string in a field like `"a"  ` must be ignored or not. Our parser
-will not ignore them because the field will be seen as an unterminated
+is interesting because it is debatable for example whether spaces following a
+double-quoted string in a field (e.g. `"a"  `) must be ignored or not. Our
+parser will not ignore them because the field will be seen as an unterminated
 double-quoted field, as mentioned in previous sections.
 
 ### Others
 
-There are also Errata for this RFC (see link *Errata exist* at the beginning of
-the RFC) referring to [this page](https://www.rfc-editor.org/errata_search.php?rfc=4180&rec_status=0).
-No changes recorded there contradict the choices we have made so far. You can
-also learn about the status and type of RFC errata [here](https://www.rfc-editor.org/errata-definitions/).
+There are also Errata for this RFC (see link *View errata* in the metadata
+sidebar of the RFC) referring to [this page](https://www.rfc-editor.org/errata_search.php?rfc=4180).
+You might also want to use [this link](https://www.rfc-editor.org/errata_search.php?rfc=4180&rec_status=0)
+instead, to see only records whose status is Verified or Reported (as
+initialized in the search component of the UI). No changes recorded there
+contradict the choices we've made for our CSV parser so far. You can also learn
+about the status and type of RFC errata [here](https://www.rfc-editor.org/errata-definitions/).
 
 Finally, section 5 of the RFC reminds us of some security considerations. And
 while these considerations are addressed in the *MIME Type Registration of text/csv*
@@ -137,12 +142,12 @@ and JSON data is available below for import. Explanations follow hereinafter.
 First, note that `q0` is the initial state. Given a string, we start from the
 initial state, read a character and move to a destination state accordingly. For
 example, in `q0`, if we read a comma or a line break, or when we reach the end
-of a file, we stay in `q0`, otherwise we transition to `q2` or `q1`. And so on
-for each state. However, please note that the pseudo-automaton currently does
-not help to understand what we do in each state after reading a character and
-before moving to a destination state, but the operations are basically ignoring
-or accumulating characters in order to create new fields and new records, a
-record being an array of fields on a single line.
+of a file (EOFS), we stay in `q0`, otherwise we transition to `q2` or `q1`. And
+so on for each state. However, please note that the pseudo-automaton currently
+does not help to understand what we do in each state after reading a character
+and before moving to a destination state, but the operations are basically
+ignoring or accumulating characters in order to create new fields and new
+records, a record being an array of fields on a single line.
 
 Let's get back to reading characters: what happens when there is nothing left to
 read? When there is nothing left to read, then it is unsure what to do. Indeed,
@@ -167,12 +172,13 @@ first: [Defining a class in JavaScript](https://github.com/arlogy/devnotes/blob/
 
 Performance benchmarking is based on this [article](https://leanylabs.com/blog/js-csv-parsers-benchmarks/)
 which provides a Github repository that we forked [here](https://github.com/arlogy/csv-parsers-benchmarks).
-Instead of reading the article, you can only take a look at the Github
-repository whose `README.md` file is quite short to read. You will notice that
-our CSV parser is part of a library called *jsu*, and we'll use that name to
-refer to the parser in this section. Furthermore, we used the version 1.5.0 of
-the parser during our benchmarking session: results on execution time may vary
-between versions of the parser, but the ranking is the same since version 1.0.0.
+Instead of reading the article, you might want to focus only on the `README.md`
+file of the Github repository which is quite short to read. Then you will notice
+that our CSV parser is part of a library called *jsu*, and we'll use that name
+to refer to the parser in this section. Furthermore, we used the version 1.5.1
+of the parser during our benchmarking session: results on execution time may
+vary between versions of the parser, but the ranking is the same since version
+1.0.0.
 
 Besides, each parser provides different parsing options ([csv-parse](https://csv.js.org/parse/options/),
 [csv-parser](https://github.com/mafintosh/csv-parser#csvoptions--headers),
@@ -184,8 +190,7 @@ enabled. For example, jsu allows multiple entries for line separators and field
 separators; depending on the value of each separator, the regular expression
 used internally during parsing is optimized or not, and jsu compares to the
 other parsers only when a smart/optimized regular expression is in play, which
-is the case for the rather standard delimiters and separators used in CSV files
-during benchmarks.
+is the case for one of the two configurations used for jsu during benchmarks.
 
 Benchmarking results are as follows.
 
@@ -204,16 +209,16 @@ This leads to the following parser classification.
 
 #### All data
 
-Please note that the execution time in parentheses below (both for raw and
-quoted data) is expressed in ms, taken from a single benchmarking session and
-can change significantly between runs, especially for different hardware
+Please note that the execution time in parentheses (both for raw and quoted data
+below) is expressed in ms, taken from a single benchmarking session and can
+change significantly between runs, especially for different hardware
 configurations; but the ranking should be fairly stable.
 
 #### Raw data
 
 `raw_c_l` refers to a CSV file not containing double quotes, having `c` columns
 and `l` lines. If you prefer, you can focus only on the largest tested file (the
-last one reported below).
+last one reported below) and read the following summary paragraph.
 
 - `raw_10_10000`: 1. String.split (14.75) / 1. papaparse (24.2) / 1. jsu-smart-on (37.85) / 1. dekkai (42.85) / 1. csv-parser (70.1) / 1. csv-parse (77.7) / 1. jsu-smart-off (144.6) / 1. fast-csv (148.25)
 - `raw_10_10000`: 1. String.split (115.1) / 1. papaparse (139.5) / 1. jsu-smart-on (279.6) / 1. dekkai (291) / 2. csv-parser (583) / 2. csv-parse (657.5) / 3. fast-csv (1195.1) / 3. jsu-smart-off (1329.4)
@@ -223,17 +228,17 @@ last one reported below).
 dekkai crashed in the last two tests, so no results are available. And even
 though String.split performs better than any other parser, please note that it
 can split a string incorrectly as shown [here](https://stackoverflow.com/questions/30912663/sort-a-string-alphabetically-using-a-function/58220344#58220344).
-Therefore and considering only the last result, papaparse is number one,
-followed by jsu which finished less than 2 seconds behind, then comes csv-parser
-which finished less than 3 seconds after jsu. Any other parser becomes
-impractical in terms of speed at this point, although csv-parse isn't that far
-off.
+Therefore and considering only the result of the last test, papaparse is number
+one, followed by jsu which finished less than 2 seconds behind, then comes
+csv-parser which finished less than 3 seconds after jsu. Any other parser
+becomes impractical in terms of speed at this point, although csv-parse isn't
+that far off.
 
 #### Quoted data
 
 `quotes_c_l` refers to a CSV file containing double quotes, having `c` columns
 and `l` lines. If you prefer, you can focus only on the largest tested file (the
-last one reported below).
+last one reported below) and read the following summary paragraph.
 
 - `quotes_10_10000`: 1. dekkai (44.2) / 1. papaparse (47.05) / 1. jsu-smart-on (54.75) / 1. csv-parser (73.15) / 1. csv-parse (79.35) / 1. jsu-smart-off (135.65) / 1. fast-csv (174.9)
 - `quotes_100_10000`: 1. dekkai (292.9) / 1. papaparse (358.6) / 1. jsu-smart-on (491.6) / 2. csv-parser (649.9) / 2. csv-parse (679.3) / 3. jsu-smart-off (1239.2) / 3. fast-csv (1444.7)
@@ -242,16 +247,16 @@ last one reported below).
 
 Again, dekkai crashed in the last two tests, so no results are available.
 String.split is not applicable here because additional code is needed to
-correctly parse quoted fields. Therefore and considering only the last result,
-papaparse is still Papa (the fastest), followed by jsu which finished about 1
-second behind, then comes csv-parser and csv-parse which are about 2 seconds
-behind jsu. The other parsers are less interesting in terms of speed at this
-stage.
+correctly parse quoted fields. Therefore and considering only the result of the
+last test, papaparse is still Papa (the fastest), followed by jsu which finished
+about 1 second behind, then comes csv-parser and csv-parse which are about 2
+seconds behind jsu. The other parsers are less interesting in terms of speed at
+this stage.
 
-#### Fun facts
+#### Other facts
 
-What's surprising is how fast the fast-csv parser is... If the problem is not in
-our benchmarks, it may be interesting to read their source code to understand
-the reason of the slowness. Also note that some parsers may be using Node.js
-threads to speed up parsing: jsu doesn't use any. It's also not certain that all
-parsers are RFC 4180 compliant, but papaparse and jsu surely are.
+Surprisingly, the fast-csv parser is the slowest, and it may be interesting to
+read its source code to understand the reason of the slowness. Moreover, some
+parsers may be using Node.js threads to speed up parsing; jsu doesn't use any.
+It's also not certain that all parsers are RFC 4180 compliant, but papaparse and
+jsu surely are.
