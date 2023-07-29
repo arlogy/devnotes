@@ -173,20 +173,19 @@ first: [Defining a class in JavaScript](https://github.com/arlogy/devnotes/blob/
 Performance benchmarking is based on this [article](https://leanylabs.com/blog/js-csv-parsers-benchmarks/)
 which provides a Github repository that we forked [here](https://github.com/arlogy/csv-parsers-benchmarks).
 Instead of reading the article, you might want to focus only on the `README.md`
-file of the Github repository which is quite short to read. Then you will notice
+file of our Github repository which is quite short to read. Then you will notice
 that our CSV parser is part of a library called *jsu*, and we'll use that name
-to refer to the parser in this section. Furthermore, we used the version 1.5.1
-of the parser during our benchmarking session: results on execution time may
-vary between versions of the parser, but the ranking is the same since version
-1.0.0.
+to refer to the parser in this section. Furthermore, we used version 1.5.1 of
+the parser during our benchmarking session and execution times may vary between
+versions of the parser, but the ranking is the same since version 1.0.0.
 
 Besides, each parser provides different parsing options ([csv-parse](https://csv.js.org/parse/options/),
 [csv-parser](https://github.com/mafintosh/csv-parser#csvoptions--headers),
 [fast-csv](https://c2fo.github.io/fast-csv/docs/parsing/options/),
 [jsu](https://github.com/arlogy/jsu/blob/main/doc/jsu_csv_parser.md#jsucsvpsroptions),
 [paparse](https://www.papaparse.com/docs#config)) which were not tested during
-benchmarks. So, again, the results might be different when fancy options are
-enabled. For example, jsu allows multiple entries for line separators and field
+benchmarks. So the results might be different when fancy options are enabled.
+For example, jsu allows multiple entries for line separators and field
 separators; depending on the value of each separator, the regular expression
 used internally during parsing is optimized or not, and jsu compares to the
 other parsers only when a smart/optimized regular expression is in play, which
@@ -196,14 +195,16 @@ Benchmarking results are as follows.
 
 ### Comparison
 
-During benchmarks, we realized that speed variations of a few milliseconds tend
-to change between runs, and considering that a speed gain of 250 ms is hardly
-noticeable and hardly makes one parser better than the other, we will consider
-that two parsers are equivalent in speed if neither finishes more than 250 ms
-before the other. For example, if parser `B` terminates up to 250 ms after
-parser `A`, parser `B` will not be considered slower and both will have the same
-rank (let's say `rk`). Nonetheless, if parser `C` terminates up to 250 ms after
-parser `B` but more than 250 ms after parser `A`, then parser `C` cannot have
+During benchmarks, we realized that small speed variations (a few milliseconds)
+tend to fluctuate between runs, thus changing which parser is the fastest. Also,
+considering that a speed gain of 250 ms is barely noticeable and hardly makes
+one parser better than the other, we will consider that two parsers are
+equivalent in speed if neither finishes more than 250 ms before the other. For
+example, if parser `B` terminates up to 250 ms after parser `A`, parser `B` will
+not be considered slower and both will have the same rank (let's say `rk`).
+Nonetheless, if parser `C` terminates up to 250 ms after parser `B` (i.e. `C` is
+equivalent to `B`) but more than 250 ms after parser `A` (i.e. `C` is not
+equivalent to `A` and is the slowest of the two), then parser `C` cannot have
 the same rank as `A` and `B`, so the next rank (`rk+1`) will be used for `C`.
 This leads to the following parser classification.
 
